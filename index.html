@@ -501,6 +501,118 @@
       border-color: var(--red) !important;
       box-shadow: 0 0 0 3px rgba(244,63,94,.18) !important;
     }
+
+    /* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+    /* Tablet — 720px */
+    @media (max-width: 720px) {
+      header {
+        padding: 0 20px;
+        grid-template-columns: auto 1fr;
+      }
+      header > div:last-child { display: none; }
+      .nav-tabs { justify-content: flex-end; }
+      .tab-btn  { padding: 6px 14px; font-size: 12px; }
+
+      .page { padding: 24px 20px 48px; }
+
+      .stat-row    { grid-template-columns: repeat(2, 1fr); }
+      .charts-row  { grid-template-columns: 1fr; }
+
+      /* Spending chart: shorter on tablet so donut isn't cut off */
+      .chart-wrap[style] { height: 180px !important; }
+
+      /* Form: description full-width, amount + category share row */
+      .form-row-3 { grid-template-columns: 1fr 1fr; }
+      .form-row-3 .field:first-child { grid-column: 1 / -1; }
+
+      .feedback-row     { grid-template-columns: 1fr; }
+      .feedback-section { padding: 40px 20px; }
+
+      footer { padding: 16px 20px; flex-direction: column; gap: 6px; text-align: center; }
+    }
+
+    /* Phone — 480px */
+    @media (max-width: 480px) {
+      /* Header stacks: logo row then tabs row */
+      header {
+        height: auto;
+        padding: 12px 14px;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        gap: 10px;
+      }
+      header > div:last-child { display: none; }
+      .nav-tabs  { width: 100%; justify-content: stretch; }
+      .tab-btn   { flex: 1; text-align: center; padding: 7px 8px; font-size: 12px; }
+
+      .page { padding: 14px 12px 40px; }
+
+      /* Stat cards: 2×2, tighter */
+      .stat-row   { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+      .stat-card  { padding: 14px 16px; }
+      .stat-value { font-size: 20px; }
+      .stat-sub   { font-size: 10.5px; }
+
+      /* Charts */
+      .charts-row { gap: 10px; margin-bottom: 16px; }
+      .card       { padding: 16px; }
+      .card-header { margin-bottom: 14px; }
+
+      /* Donut: switch to horizontal layout on phone */
+      .donut-layout { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; }
+      .donut-center-wrap { width: 140px; height: 140px; }
+      #chart-donut { width: 140px !important; height: 140px !important; }
+      .donut-total { font-size: 16px; }
+      .cat-legend  { min-width: 0; flex: 1; }
+      .legend-amt  { display: none; }   /* hide dollar amounts in legend on phones */
+
+      /* Forms: all single-column */
+      .form-row-3   { grid-template-columns: 1fr; }
+      .form-row-3 .field:first-child { grid-column: auto; }
+      .form-row-2   { grid-template-columns: 1fr; }
+      .form-row-edit { grid-template-columns: 1fr; }
+
+      /* Edit form-footer: Delete full-width at bottom */
+      .form-footer { flex-wrap: wrap; }
+      .form-footer .save-indicator { order: -1; width: 100%; margin-right: 0; }
+      .form-footer .btn-ghost { flex: 1; }
+      .form-footer .btn:not(.btn-sm):not(.btn-ghost):not(.btn-danger) { flex: 1; }
+      .form-footer .btn-danger { order: 10; flex: 1 1 100%; }
+
+      /* Expense list: hide column headers, reflow items into 2-row grid */
+      .list-head { display: none; }
+      .exp-item {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 5px 10px;
+        padding: 12px 14px;
+      }
+      .exp-item > *:nth-child(1) { grid-column: 1; grid-row: 1; min-width: 0; }
+      .exp-item > *:nth-child(2) { grid-column: 2; grid-row: 1; align-self: start; }
+      .exp-item > *:nth-child(3) { grid-column: 1; grid-row: 2; }
+      .exp-item > *:nth-child(4) { grid-column: 2; grid-row: 2; }
+      .exp-notes { max-width: 100%; }
+
+      /* Summary bar */
+      .summary-bar { padding: 14px 16px; }
+      .sum-total   { font-size: 22px; }
+
+      /* Recent table: hide Date column, tighten padding */
+      .recent-table th:nth-child(3),
+      .recent-table td:nth-child(3) { display: none; }
+      .recent-table td { padding: 10px 10px; font-size: 12.5px; }
+      .recent-table th { padding: 0 10px 8px; }
+
+      /* Edit empty state */
+      .edit-empty-state { padding: 32px 20px; min-height: 260px; }
+
+      /* Feedback */
+      .feedback-section { padding: 28px 14px; }
+      .feedback-heading { font-size: 18px; }
+
+      footer { flex-direction: column; gap: 4px; text-align: center; padding: 14px 16px; font-size: 11px; }
+    }
   </style>
 </head>
 <body>
