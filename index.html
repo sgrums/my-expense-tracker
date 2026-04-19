@@ -3,21 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Expendr</title>
+  <title>Expendr — Expense Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #07090f;
-      --surface:   #0d1117;
-      --surface2:  #111827;
-      --border:    #1c2640;
-      --border2:   #253352;
-      --text:      #e2e8f5;
-      --muted:     #475b7a;
-      --muted2:    #334466;
-      --accent:    #5b8bf5;
-      --accent-lo: rgba(91,139,245,.14);
+      --bg:         #08090e;
+      --surface:    #0e1117;
+      --surface-hi: #131a24;
+      --surface-2:  #161e2b;
+      --border:     #1e293b;
+      --border-hi:  #263349;
+      --text:       #eef2ff;
+      --text-2:     #94a3b8;
+      --text-3:     #4a607d;
+      --accent:     #5b7fff;
+      --accent-dim: rgba(91,127,255,.12);
+      --accent-2:   #a78bfa;
+      --green:      #10b981;
+      --red:        #f43f5e;
+      --radius:     12px;
     }
 
     body {
@@ -25,99 +31,285 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* ── Header ─────────────────────────────────────────────────────── */
+    /* ─── Header ─────────────────────────────────────────────────────────── */
     header {
       position: sticky;
       top: 0;
-      z-index: 20;
-      height: 60px;
-      padding: 0 36px;
+      z-index: 50;
+      height: 62px;
+      padding: 0 40px;
       display: flex;
       align-items: center;
-      gap: 36px;
-      background: rgba(7,9,15,.8);
-      backdrop-filter: blur(16px);
+      justify-content: space-between;
+      background: rgba(8,9,14,.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
     }
 
     .logo {
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 800;
-      letter-spacing: -.4px;
+      letter-spacing: -.5px;
       color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .logo em { font-style: normal; color: var(--accent); }
-
-    .tabs { display: flex; gap: 2px; }
-
-    .tab-btn {
-      padding: 6px 16px;
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
       border-radius: 7px;
-      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .nav-tabs { display: flex; gap: 2px; }
+    .tab-btn {
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
       font-weight: 500;
       font-family: inherit;
       border: none;
       cursor: pointer;
-      color: var(--muted);
+      color: var(--text-2);
       background: none;
       transition: color .15s, background .15s;
       height: auto;
+      letter-spacing: .01em;
     }
-    .tab-btn:hover  { color: var(--text); background: var(--surface2); }
+    .tab-btn:hover { color: var(--text); background: var(--surface-hi); }
     .tab-btn.active {
       color: var(--text);
-      background: var(--surface2);
-      box-shadow: inset 0 0 0 1px var(--border2);
+      background: var(--surface-2);
+      box-shadow: inset 0 0 0 1px var(--border-hi);
     }
 
-    /* ── Pages ──────────────────────────────────────────────────────── */
+    /* ─── Page layout ────────────────────────────────────────────────────── */
+    .app-body { flex: 1; }
     .page {
       display: none;
-      max-width: 800px;
+      max-width: 1080px;
       margin: 0 auto;
-      padding: 32px 24px 72px;
+      padding: 36px 32px 60px;
     }
     .page.active { display: block; }
 
-    /* ── Cards ──────────────────────────────────────────────────────── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 24px;
-      margin-bottom: 16px;
-    }
-    .card-label {
-      font-size: 10.5px;
+    /* ─── Section header ─────────────────────────────────────────────────── */
+    .section-title {
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: .1em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 16px;
+      color: var(--text-3);
+      margin-bottom: 14px;
     }
 
-    /* ── Form ───────────────────────────────────────────────────────── */
+    /* ─── Stat cards ─────────────────────────────────────────────────────── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, background .2s;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(91,127,255,.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .stat-card:hover { background: var(--surface-hi); border-color: var(--border-hi); }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -.8px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      line-height: 1;
+    }
+    .stat-sub {
+      font-size: 11.5px;
+      color: var(--text-3);
+      margin-top: 6px;
+    }
+    .stat-icon {
+      position: absolute;
+      top: 18px; right: 18px;
+      font-size: 18px;
+      opacity: .2;
+    }
+
+    /* ─── Charts row ─────────────────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.2px;
+    }
+    .card-sub {
+      font-size: 11.5px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
+    .chart-wrap {
+      position: relative;
+    }
+
+    /* donut + legend */
+    .donut-layout {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .donut-center-wrap { position: relative; width: 180px; height: 180px; }
+    #chart-donut { width: 180px !important; height: 180px !important; }
+    .donut-center-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .donut-total { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+    .donut-label { font-size: 10.5px; color: var(--text-3); margin-top: 3px; }
+
+    .cat-legend {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-bar-track {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .legend-bar-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.16,1,.3,1); }
+    .legend-pct { font-size: 11px; color: var(--text-3); min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+    .legend-amt { font-size: 11px; color: var(--text-2); min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* empty chart state */
+    .chart-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      color: var(--text-3);
+      font-size: 13px;
+      gap: 8px;
+    }
+    .chart-empty-icon { font-size: 28px; opacity: .4; }
+
+    /* ─── Recent activity ────────────────────────────────────────────────── */
+    .recent-card { margin-bottom: 0; }
+    .recent-table { width: 100%; border-collapse: collapse; }
+    .recent-table th {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      padding: 0 12px 10px;
+      text-align: left;
+    }
+    .recent-table th:last-child { text-align: right; }
+    .recent-table td {
+      padding: 12px;
+      font-size: 13.5px;
+      border-top: 1px solid var(--border);
+      color: var(--text);
+    }
+    .recent-table td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .recent-table tr:hover td { background: var(--surface-hi); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .badge-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+    .recent-empty {
+      text-align: center;
+      padding: 32px 0;
+      color: var(--text-3);
+      font-size: 13px;
+    }
+
+    /* ─── Expenses tab ───────────────────────────────────────────────────── */
+    .form-card { margin-bottom: 20px; }
     .form-grid {
       display: grid;
-      grid-template-columns: 1fr 148px 214px;
+      grid-template-columns: 1fr 150px 220px;
       gap: 10px;
     }
     .field { display: flex; flex-direction: column; gap: 6px; }
-
-    label {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--muted);
-      letter-spacing: .04em;
-    }
-
-    input, select {
-      height: 42px;
-      padding: 0 13px;
-      background: var(--surface2);
-      border: 1px solid var(--border2);
+    label { font-size: 11.5px; font-weight: 600; color: var(--text-3); letter-spacing: .04em; }
+    input, select, textarea {
+      background: var(--surface-2);
+      border: 1px solid var(--border-hi);
       border-radius: 8px;
       font-size: 13.5px;
       font-family: inherit;
@@ -127,25 +319,32 @@
       appearance: none;
       -webkit-appearance: none;
     }
+    input, select { height: 42px; padding: 0 13px; }
     select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%23475b7a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%234a607d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
       padding-right: 32px;
       cursor: pointer;
     }
-    input:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-lo);
+    textarea {
+      padding: 11px 13px;
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.6;
     }
-    input::placeholder { color: var(--muted2); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-3); }
 
     .form-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
 
     .btn {
       height: 42px;
       padding: 0 22px;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #6b8fff);
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -154,22 +353,29 @@
       font-family: inherit;
       cursor: pointer;
       letter-spacing: .02em;
-      transition: filter .15s, transform .1s;
+      transition: opacity .15s, transform .1s, box-shadow .15s;
+      box-shadow: 0 4px 18px rgba(91,127,255,.3);
     }
-    .btn:hover  { filter: brightness(1.12); }
+    .btn:hover  { opacity: .9; box-shadow: 0 6px 24px rgba(91,127,255,.4); }
     .btn:active { transform: scale(.97); }
+    .btn-sm {
+      height: 36px;
+      padding: 0 16px;
+      font-size: 12.5px;
+      box-shadow: none;
+    }
 
-    /* ── Expense list ───────────────────────────────────────────────── */
+    /* list */
     .list-head {
       display: grid;
-      grid-template-columns: 1fr 120px 1fr 34px;
+      grid-template-columns: 1fr 130px 1fr 36px;
       gap: 10px;
       padding: 0 16px 9px;
       font-size: 10.5px;
       font-weight: 700;
-      letter-spacing: .09em;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--text-3);
     }
 
     #expense-list { display: flex; flex-direction: column; gap: 5px; }
@@ -181,13 +387,13 @@
       border-radius: 9px;
       padding: 13px 16px;
       display: grid;
-      grid-template-columns: 1fr 120px 1fr 34px;
+      grid-template-columns: 1fr 130px 1fr 36px;
       gap: 10px;
       align-items: center;
       animation: slideIn .2s ease;
       transition: background .15s;
     }
-    .exp-item:hover { background: var(--surface2); }
+    .exp-item:hover { background: var(--surface-hi); }
 
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(-7px); }
@@ -195,318 +401,327 @@
     }
 
     .exp-name   { font-size: 13.5px; font-weight: 500; }
-    .exp-amount {
-      font-size: 14.5px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 9px;
-      border-radius: 5px;
-      font-size: 11.5px;
-      font-weight: 600;
-      border: 1px solid transparent;
-      width: fit-content;
-    }
-    .badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    .exp-amount { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .exp-date   { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 
     .del-btn {
-      width: 26px;
-      height: 26px;
+      width: 28px; height: 28px;
       padding: 0;
       background: none;
-      color: var(--muted);
+      color: var(--text-3);
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 18px;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       transition: color .15s, background .15s;
     }
-    .del-btn:hover { color: #f43f5e; background: rgba(244,63,94,.12); }
+    .del-btn:hover { color: var(--red); background: rgba(244,63,94,.12); }
 
-    /* ── Empty state ────────────────────────────────────────────────── */
-    .empty {
+    .list-empty {
       text-align: center;
-      padding: 52px 0;
-      color: var(--muted);
+      padding: 56px 0;
+      color: var(--text-3);
       font-size: 13.5px;
-      line-height: 1.6;
     }
 
-    /* ── Summary bar ────────────────────────────────────────────────── */
+    /* summary bar */
     .summary-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius);
       padding: 18px 24px;
       margin-top: 10px;
     }
-    .sum-label { font-size: 13px; color: var(--muted); font-weight: 500; }
-    .sum-count { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
-    .sum-total {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -1px;
-      font-variant-numeric: tabular-nums;
-    }
+    .sum-label { font-size: 13px; color: var(--text-2); font-weight: 500; }
+    .sum-count { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+    .sum-total { font-size: 28px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 
-    /* ── Breakdown: stat row ────────────────────────────────────────── */
-    .stat-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .stat-card {
+    /* ─── Feedback section ───────────────────────────────────────────────── */
+    .feedback-section {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 20px;
+      border-top: 1px solid var(--border);
+      padding: 60px 32px;
     }
-    .stat-label {
-      font-size: 10.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .09em;
-      color: var(--muted);
-      margin-bottom: 8px;
+    .feedback-inner {
+      max-width: 640px;
+      margin: 0 auto;
     }
-    .stat-value {
+    .feedback-heading {
       font-size: 22px;
       font-weight: 800;
       letter-spacing: -.5px;
-      font-variant-numeric: tabular-nums;
+      margin-bottom: 6px;
     }
-    .stat-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
-
-    /* ── Breakdown: chart + bars ────────────────────────────────────── */
-    .bd-grid {
+    .feedback-sub {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .feedback-row {
       display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 14px;
-      align-items: start;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
     }
-
-    #donut-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 20px 20px;
-    }
-
-    #donut-canvas { display: block; margin: 0 auto; }
-
-    .donut-legend {
-      margin-top: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11.5px;
-      font-weight: 500;
-      color: var(--text);
-    }
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .legend-pct {
-      margin-left: auto;
-      font-size: 11px;
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .bd-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .bar-row {
-      background: var(--surface);
-      border: 1px solid var(--border);
+    .feedback-success {
+      display: none;
+      background: rgba(16,185,129,.1);
+      border: 1px solid rgba(16,185,129,.3);
       border-radius: 10px;
-      padding: 14px 16px;
-      animation: slideIn .2s ease;
+      padding: 16px 20px;
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 16px;
     }
-    .bar-top {
+    .feedback-error {
+      display: none;
+      background: rgba(244,63,94,.1);
+      border: 1px solid rgba(244,63,94,.3);
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: var(--red);
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 16px;
+    }
+
+    /* ─── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 20px 40px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-    }
-    .bar-left {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-    .bar-cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .bar-name  { font-size: 13.5px; font-weight: 600; }
-    .bar-right { text-align: right; }
-    .bar-amount {
-      font-size: 14.5px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-    .bar-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-    .bar-track {
-      height: 4px;
-      background: var(--border2);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-    .bar-fill {
-      height: 100%;
-      border-radius: 99px;
-      transition: width .65s cubic-bezier(.16,1,.3,1);
+      font-size: 12px;
+      color: var(--text-3);
     }
 
-    .bd-empty {
-      text-align: center;
-      padding: 80px 0;
-      color: var(--muted);
-      font-size: 13.5px;
+    /* ─── Flash ──────────────────────────────────────────────────────────── */
+    .flash-border {
+      border-color: var(--red) !important;
+      box-shadow: 0 0 0 3px rgba(244,63,94,.18) !important;
     }
   </style>
 </head>
 <body>
 
+<!-- ─── Header ────────────────────────────────────────────────────────────── -->
 <header>
-  <div class="logo">exp<em>.</em>track</div>
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="expenses">Expenses</button>
-    <button class="tab-btn"        data-tab="breakdown">Breakdown</button>
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    expendr
+  </div>
+  <nav class="nav-tabs">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn"        data-tab="expenses">Expenses</button>
   </nav>
 </header>
 
-<!-- EXPENSES ──────────────────────────────────────────────────────────────── -->
-<div class="page active" id="page-expenses">
+<div class="app-body">
 
-  <div class="card">
-    <div class="card-label">New Expense</div>
-    <div class="form-grid">
-      <div class="field">
-        <label for="inp-name">Description</label>
-        <input id="inp-name" type="text" placeholder="e.g. Grocery run" autocomplete="off">
+  <!-- ─── Overview tab ──────────────────────────────────────────────────── -->
+  <div class="page active" id="page-overview">
+
+    <!-- Stat cards -->
+    <div class="stat-row" id="stat-row">
+      <div class="stat-card">
+        <div class="stat-icon">💸</div>
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value" id="stat-total">$0.00</div>
+        <div class="stat-sub" id="stat-count">0 expenses recorded</div>
       </div>
-      <div class="field">
-        <label for="inp-amount">Amount ($)</label>
-        <input id="inp-amount" type="number" min="0.01" step="0.01" placeholder="0.00">
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-label">This Month</div>
+        <div class="stat-value" id="stat-month">$0.00</div>
+        <div class="stat-sub" id="stat-month-sub">current month</div>
       </div>
-      <div class="field">
-        <label for="inp-cat">Category</label>
-        <select id="inp-cat">
-          <option>Food &amp; Dining</option>
-          <option>Groceries</option>
-          <option>Restaurants &amp; Bars</option>
-          <option>Coffee &amp; Drinks</option>
-          <option>Transport</option>
-          <option>Housing &amp; Rent</option>
-          <option>Utilities</option>
-          <option>Health &amp; Fitness</option>
-          <option>Entertainment</option>
-          <option>Shopping</option>
-          <option>Travel</option>
-          <option>Education</option>
-          <option>Subscriptions</option>
-          <option>Personal Care</option>
-          <option>Gifts &amp; Donations</option>
-          <option>Investments</option>
-          <option selected>Other</option>
-        </select>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">Avg per Expense</div>
+        <div class="stat-value" id="stat-avg">$0.00</div>
+        <div class="stat-sub" id="stat-avg-sub">across all entries</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-label">Biggest Expense</div>
+        <div class="stat-value" id="stat-max">$0.00</div>
+        <div class="stat-sub" id="stat-max-sub">—</div>
       </div>
     </div>
-    <div class="form-footer">
-      <button class="btn" id="add-btn">Add Expense</button>
+
+    <!-- Charts -->
+    <div class="charts-row">
+
+      <!-- Spending over time -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Spending Over Time</div>
+            <div class="card-sub" id="time-chart-sub">Last 14 days</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:220px">
+          <canvas id="chart-time"></canvas>
+          <div class="chart-empty" id="time-empty">
+            <span class="chart-empty-icon">📈</span>
+            Add expenses to see your trend
+          </div>
+        </div>
+      </div>
+
+      <!-- Category donut -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">By Category</div>
+            <div class="card-sub" id="donut-sub">All time</div>
+          </div>
+        </div>
+        <div id="donut-content">
+          <div class="chart-empty">
+            <span class="chart-empty-icon">🍩</span>
+            No data yet
+          </div>
+        </div>
+      </div>
+
     </div>
-  </div>
 
-  <div class="list-head">
-    <span>Description</span>
-    <span>Amount</span>
-    <span>Category</span>
-    <span></span>
-  </div>
-
-  <div id="expense-list">
-    <div class="empty" id="empty-msg">No expenses yet — add one above.</div>
-  </div>
-
-  <div class="summary-bar">
-    <div>
-      <div class="sum-label">Total Spent</div>
-      <div class="sum-count" id="sum-count">0 expenses</div>
+    <!-- Recent activity -->
+    <div class="card recent-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Recent Activity</div>
+          <div class="card-sub">Your last 8 expenses</div>
+        </div>
+        <button class="btn btn-sm" onclick="switchTab('expenses')">View All</button>
+      </div>
+      <div id="recent-body">
+        <div class="recent-empty">No expenses yet — add some on the Expenses tab.</div>
+      </div>
     </div>
-    <div class="sum-total" id="sum-total">$0.00</div>
-  </div>
 
-</div>
+  </div><!-- /overview -->
 
-<!-- BREAKDOWN ─────────────────────────────────────────────────────────────── -->
-<div class="page" id="page-breakdown">
+  <!-- ─── Expenses tab ───────────────────────────────────────────────────── -->
+  <div class="page" id="page-expenses">
 
-  <div class="stat-row">
-    <div class="stat-card">
-      <div class="stat-label">Total Spent</div>
-      <div class="stat-value" id="bd-total">$0.00</div>
-      <div class="stat-sub"  id="bd-count">0 expenses</div>
+    <div class="card form-card">
+      <div class="section-title">New Expense</div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="inp-name">Description</label>
+          <input id="inp-name" type="text" placeholder="e.g. Monthly gym membership" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="inp-amount">Amount ($)</label>
+          <input id="inp-amount" type="number" min="0.01" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label for="inp-cat">Category</label>
+          <select id="inp-cat">
+            <option>Food &amp; Dining</option>
+            <option>Groceries</option>
+            <option>Restaurants &amp; Bars</option>
+            <option>Coffee &amp; Drinks</option>
+            <option>Transport</option>
+            <option>Housing &amp; Rent</option>
+            <option>Utilities</option>
+            <option>Health &amp; Fitness</option>
+            <option>Entertainment</option>
+            <option>Shopping</option>
+            <option>Travel</option>
+            <option>Education</option>
+            <option>Subscriptions</option>
+            <option>Personal Care</option>
+            <option>Gifts &amp; Donations</option>
+            <option>Investments</option>
+            <option selected>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn" id="add-btn">Add Expense</button>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Top Category</div>
-      <div class="stat-value" id="bd-top-cat" style="font-size:16px;padding-top:4px">—</div>
-      <div class="stat-sub"  id="bd-top-pct"></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Avg per Expense</div>
-      <div class="stat-value" id="bd-avg">$0.00</div>
-      <div class="stat-sub"  id="bd-avg-sub"></div>
-    </div>
-  </div>
 
-  <div id="bd-content">
-    <div class="bd-empty">Add some expenses to see your breakdown.</div>
-  </div>
+    <div class="list-head">
+      <span>Description</span>
+      <span>Amount</span>
+      <span>Category</span>
+      <span></span>
+    </div>
 
-</div>
+    <div id="expense-list">
+      <div class="list-empty" id="list-empty">No expenses yet — add one above.</div>
+    </div>
+
+    <div class="summary-bar">
+      <div>
+        <div class="sum-label">Total Spent</div>
+        <div class="sum-count" id="sum-count">0 expenses</div>
+      </div>
+      <div class="sum-total" id="sum-total">$0.00</div>
+    </div>
+
+  </div><!-- /expenses -->
+
+</div><!-- /app-body -->
+
+<!-- ─── Feedback section ───────────────────────────────────────────────────── -->
+<section class="feedback-section">
+  <div class="feedback-inner">
+    <div class="feedback-heading">Share Your Feedback</div>
+    <div class="feedback-sub">Have a feature idea or found a bug? We'd love to hear from you.</div>
+    <form id="feedback-form" action="https://formspree.io/f/placeholder" method="POST" novalidate>
+      <div class="feedback-row">
+        <div class="field">
+          <label for="fb-name">Your Name</label>
+          <input id="fb-name" name="name" type="text" placeholder="Jane Smith">
+        </div>
+        <div class="field">
+          <label for="fb-email">Email Address</label>
+          <input id="fb-email" name="email" type="email" placeholder="jane@example.com">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:16px">
+        <label for="fb-msg">Message</label>
+        <textarea id="fb-msg" name="message" placeholder="Tell us what you think or what you'd like to see…"></textarea>
+      </div>
+      <button class="btn" type="submit" id="fb-submit">Send Feedback</button>
+      <div class="feedback-success" id="fb-success">✓ Thanks! Your message has been sent.</div>
+      <div class="feedback-error"   id="fb-error">Something went wrong. Please try again.</div>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <span>expendr — personal finance tracker</span>
+  <span>Data stored locally in your browser</span>
+</footer>
 
 <script>
-// ── Category colours ────────────────────────────────────────────────────────
+// ─── Category config ─────────────────────────────────────────────────────────
 const CATS = {
   'Food & Dining':       '#f59e0b',
   'Groceries':           '#84cc16',
   'Restaurants & Bars':  '#fb923c',
-  'Coffee & Drinks':     '#d97706',
+  'Coffee & Drinks':     '#fbbf24',
   'Transport':           '#38bdf8',
   'Housing & Rent':      '#2dd4bf',
   'Utilities':           '#94a3b8',
   'Health & Fitness':    '#f43f5e',
   'Entertainment':       '#a855f7',
   'Shopping':            '#ec4899',
-  'Travel':              '#fbbf24',
+  'Travel':              '#facc15',
   'Education':           '#60a5fa',
   'Subscriptions':       '#818cf8',
   'Personal Care':       '#4ade80',
@@ -514,286 +729,395 @@ const CATS = {
   'Investments':         '#34d399',
   'Other':               '#64748b',
 };
+const catCol = c => CATS[c] || CATS['Other'];
 
-function catCol(c) { return CATS[c] || CATS['Other']; }
+// ─── Chart.js global defaults ────────────────────────────────────────────────
+Chart.defaults.color          = '#4a607d';
+Chart.defaults.borderColor    = '#1e293b';
+Chart.defaults.font.family    = '-apple-system, BlinkMacSystemFont, "Inter", sans-serif';
 
-// ── State ───────────────────────────────────────────────────────────────────
+// ─── State ───────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'expendr_expenses';
-const expenses = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+const expenses    = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 
-function persist() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+let timeChartInst  = null;
+let donutChartInst = null;
+
+function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  if (name === 'overview') refreshOverview();
 }
 
-// ── DOM ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn =>
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+);
+
+// ─── Add expense ──────────────────────────────────────────────────────────────
 const inpName   = document.getElementById('inp-name');
 const inpAmount = document.getElementById('inp-amount');
 const inpCat    = document.getElementById('inp-cat');
 const listEl    = document.getElementById('expense-list');
-const emptyMsg  = document.getElementById('empty-msg');
-const sumTotal  = document.getElementById('sum-total');
-const sumCount  = document.getElementById('sum-count');
+const listEmpty = document.getElementById('list-empty');
 
-// ── Tabs ────────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('page-' + btn.dataset.tab).classList.add('active');
-    if (btn.dataset.tab === 'breakdown') renderBreakdown();
-  });
-});
-
-// ── Add expense ─────────────────────────────────────────────────────────────
 document.getElementById('add-btn').addEventListener('click', addExpense);
 [inpName, inpAmount, inpCat].forEach(el =>
   el.addEventListener('keydown', e => { if (e.key === 'Enter') addExpense(); })
 );
 
 function addExpense() {
-  const name     = inpName.value.trim();
-  const amount   = parseFloat(inpAmount.value);
-  const category = inpCat.value;
-
+  const name   = inpName.value.trim();
+  const amount = parseFloat(inpAmount.value);
+  const cat    = inpCat.value;
   if (!name)             { flash(inpName);   return; }
   if (!amount || amount <= 0) { flash(inpAmount); return; }
 
-  const exp = { id: Date.now(), name, amount, category };
+  const exp = { id: Date.now(), name, amount, category: cat };
   expenses.push(exp);
   persist();
-  renderItem(exp);
-  syncSummary();
-
-  inpName.value   = '';
-  inpAmount.value = '';
-  inpName.focus();
+  renderExpItem(exp);
+  syncAll();
+  inpName.value = ''; inpAmount.value = ''; inpName.focus();
 }
 
-function renderItem(exp) {
-  emptyMsg.style.display = 'none';
-  const col   = catCol(exp.category);
-  const bgCol = col + '18';
-  const bdCol = col + '44';
+function renderExpItem(exp, prepend = false) {
+  listEmpty.style.display = 'none';
+  const col  = catCol(exp.category);
+  const bg   = col + '18';
+  const bd   = col + '44';
+  const date = new Date(exp.id).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const el = document.createElement('div');
   el.className = 'exp-item';
   el.dataset.id = exp.id;
   el.style.borderLeftColor = col;
   el.innerHTML = `
-    <span class="exp-name">${esc(exp.name)}</span>
+    <div>
+      <div class="exp-name">${esc(exp.name)}</div>
+      <div class="exp-date">${date}</div>
+    </div>
     <span class="exp-amount" style="color:${col}">$${exp.amount.toFixed(2)}</span>
     <span>
-      <span class="badge" style="background:${bgCol};border-color:${bdCol};color:${col}">
-        <span class="badge-dot" style="background:${col}"></span>
-        ${esc(exp.category)}
+      <span class="badge" style="background:${bg};border-color:${bd};color:${col}">
+        <span class="badge-dot" style="background:${col}"></span>${esc(exp.category)}
       </span>
     </span>
     <button class="del-btn" aria-label="Delete">&times;</button>
   `;
-
-  el.querySelector('.del-btn').addEventListener('click', () => {
-    const i = expenses.findIndex(e => e.id === exp.id);
-    if (i !== -1) { expenses.splice(i, 1); persist(); }
-    el.style.transition = 'opacity .18s, transform .18s';
-    el.style.opacity    = '0';
-    el.style.transform  = 'translateY(-6px)';
-    setTimeout(() => {
-      el.remove();
-      if (!expenses.length) emptyMsg.style.display = '';
-      syncSummary();
-    }, 180);
-  });
-
-  listEl.appendChild(el);
+  el.querySelector('.del-btn').addEventListener('click', () => deleteExpense(exp.id, el));
+  prepend ? listEl.prepend(el) : listEl.appendChild(el);
 }
 
-function syncSummary() {
+function deleteExpense(id, el) {
+  const i = expenses.findIndex(e => e.id === id);
+  if (i !== -1) { expenses.splice(i, 1); persist(); }
+  el.style.transition = 'opacity .18s, transform .18s';
+  el.style.opacity    = '0';
+  el.style.transform  = 'translateY(-6px)';
+  setTimeout(() => {
+    el.remove();
+    if (!expenses.length) listEmpty.style.display = '';
+    syncAll();
+  }, 180);
+}
+
+// ─── Sync all derived UI ──────────────────────────────────────────────────────
+function syncAll() {
+  syncSummaryBar();
+  if (document.getElementById('page-overview').classList.contains('active')) refreshOverview();
+}
+
+function syncSummaryBar() {
   const total = expenses.reduce((s, e) => s + e.amount, 0);
-  sumTotal.textContent = '$' + total.toFixed(2);
-  const n = expenses.length;
-  sumCount.textContent = n === 1 ? '1 expense' : `${n} expenses`;
+  const n     = expenses.length;
+  document.getElementById('sum-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('sum-count').textContent = n === 1 ? '1 expense' : `${n} expenses`;
 }
 
-// ── Breakdown ───────────────────────────────────────────────────────────────
-function renderBreakdown() {
+// ─── Overview ─────────────────────────────────────────────────────────────────
+function refreshOverview() {
+  updateStatCards();
+  updateTimeChart();
+  updateDonutChart();
+  updateRecentTable();
+}
+
+function updateStatCards() {
   const total = expenses.reduce((s, e) => s + e.amount, 0);
   const n     = expenses.length;
 
-  document.getElementById('bd-total').textContent = '$' + total.toFixed(2);
-  document.getElementById('bd-count').textContent = n === 1 ? '1 expense' : `${n} expenses`;
-  document.getElementById('bd-avg').textContent   = n ? '$' + (total / n).toFixed(2) : '$0.00';
+  const now   = new Date();
+  const month = expenses
+    .filter(e => { const d = new Date(e.id); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+    .reduce((s, e) => s + e.amount, 0);
+
+  const max   = n ? expenses.reduce((m, e) => e.amount > m.amount ? e : m) : null;
+
+  document.getElementById('stat-total').textContent     = '$' + total.toFixed(2);
+  document.getElementById('stat-count').textContent     = n === 1 ? '1 expense recorded' : `${n} expenses recorded`;
+  document.getElementById('stat-month').textContent     = '$' + month.toFixed(2);
+  document.getElementById('stat-month-sub').textContent = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('stat-avg').textContent       = n ? '$' + (total / n).toFixed(2) : '$0.00';
+  document.getElementById('stat-avg-sub').textContent   = 'across all entries';
+  document.getElementById('stat-max').textContent       = max ? '$' + max.amount.toFixed(2) : '$0.00';
+  document.getElementById('stat-max-sub').textContent   = max ? esc(max.name) : '—';
+}
+
+// ─── Time chart ───────────────────────────────────────────────────────────────
+function updateTimeChart() {
+  const canvas   = document.getElementById('chart-time');
+  const emptyEl  = document.getElementById('time-empty');
+  const { labels, data } = getTimeSeries();
+  const hasData  = data.some(v => v > 0);
+
+  emptyEl.style.display  = hasData ? 'none' : 'flex';
+  canvas.style.display   = hasData ? 'block' : 'none';
+
+  if (!hasData) { if (timeChartInst) { timeChartInst.destroy(); timeChartInst = null; } return; }
+
+  const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, 220);
+  gradient.addColorStop(0,   'rgba(91,127,255,.35)');
+  gradient.addColorStop(1,   'rgba(91,127,255,.0)');
+
+  if (timeChartInst) {
+    timeChartInst.data.labels              = labels;
+    timeChartInst.data.datasets[0].data   = data;
+    timeChartInst.update('none');
+    return;
+  }
+
+  timeChartInst = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Spent',
+        data,
+        backgroundColor: data.map((v, i) => i === data.length - 1 && v > 0 ? 'rgba(91,127,255,.85)' : 'rgba(91,127,255,.45)'),
+        borderRadius: 5,
+        borderSkipped: false,
+        barPercentage: .6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#131a24',
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#eef2ff',
+          padding: 12,
+          callbacks: { label: ctx => ' $' + ctx.parsed.y.toFixed(2) }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, maxRotation: 0 },
+        },
+        y: {
+          grid: { color: 'rgba(30,41,59,.8)', drawTicks: false },
+          ticks: {
+            font: { size: 11 },
+            padding: 8,
+            callback: v => '$' + v.toFixed(0),
+          },
+          border: { display: false },
+        }
+      }
+    }
+  });
+}
+
+function getTimeSeries() {
+  const DAYS = 14;
+  const labels = [], data = [];
+  for (let i = DAYS - 1; i >= 0; i--) {
+    const d   = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    data.push(parseFloat(
+      expenses.filter(e => new Date(e.id).toISOString().slice(0, 10) === key)
+              .reduce((s, e) => s + e.amount, 0).toFixed(2)
+    ));
+  }
+  return { labels, data };
+}
+
+// ─── Donut chart ──────────────────────────────────────────────────────────────
+function updateDonutChart() {
+  const wrap = document.getElementById('donut-content');
 
   const byCategory = {};
   expenses.forEach(e => { byCategory[e.category] = (byCategory[e.category] || 0) + e.amount; });
   const sorted = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+  const total  = expenses.reduce((s, e) => s + e.amount, 0);
 
-  if (sorted.length) {
-    const [topCat, topAmt] = sorted[0];
-    document.getElementById('bd-top-cat').textContent = topCat;
-    document.getElementById('bd-top-pct').textContent = total
-      ? Math.round(topAmt / total * 100) + '% of spending' : '';
-  } else {
-    document.getElementById('bd-top-cat').textContent = '—';
-    document.getElementById('bd-top-pct').textContent = '';
-  }
-
-  const content = document.getElementById('bd-content');
-
-  if (!expenses.length) {
-    content.innerHTML = '<div class="bd-empty">Add some expenses to see your breakdown.</div>';
+  if (!sorted.length) {
+    if (donutChartInst) { donutChartInst.destroy(); donutChartInst = null; }
+    wrap.innerHTML = `<div class="chart-empty"><span class="chart-empty-icon">🍩</span>No data yet</div>`;
     return;
   }
 
-  // Build chart + bars layout
-  const legendItems = sorted.slice(0, 8).map(([cat, amt]) => {
-    const pct = total ? (amt / total * 100) : 0;
+  document.getElementById('donut-sub').textContent = `${sorted.length} categor${sorted.length === 1 ? 'y' : 'ies'}`;
+
+  const labels = sorted.map(([c]) => c);
+  const data   = sorted.map(([, v]) => parseFloat(v.toFixed(2)));
+  const colors = labels.map(catCol);
+
+  const legendHtml = sorted.map(([cat, amt]) => {
+    const pct = (amt / total * 100);
     const col = catCol(cat);
-    return `<div class="legend-item">
+    return `<div class="legend-row">
       <span class="legend-dot" style="background:${col}"></span>
-      <span style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(cat)}</span>
+      <span style="flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px">${esc(cat)}</span>
+      <div class="legend-bar-track">
+        <div class="legend-bar-fill" style="width:${pct}%;background:${col}"></div>
+      </div>
       <span class="legend-pct">${pct.toFixed(1)}%</span>
+      <span class="legend-amt">$${amt.toFixed(2)}</span>
     </div>`;
   }).join('');
 
-  content.innerHTML = `
-    <div class="bd-grid">
-      <div id="donut-wrap">
-        <div class="card-label">Category Split</div>
-        <canvas id="donut-canvas" width="220" height="220" style="width:220px;height:220px"></canvas>
-        <div class="donut-legend">${legendItems}</div>
+  wrap.innerHTML = `
+    <div class="donut-layout">
+      <div class="donut-center-wrap">
+        <canvas id="chart-donut" width="180" height="180"></canvas>
+        <div class="donut-center-text">
+          <div class="donut-total">$${total.toFixed(0)}</div>
+          <div class="donut-label">total</div>
+        </div>
       </div>
-      <div class="bd-bars" id="bd-bars"></div>
+      <div class="cat-legend">${legendHtml}</div>
     </div>
   `;
 
-  // Animate donut
-  animateDonut(sorted, total);
-
-  // Bars
-  const barsEl = document.getElementById('bd-bars');
-  sorted.forEach(([cat, amt]) => {
-    const col = catCol(cat);
-    const pct = total ? (amt / total * 100) : 0;
-    const row = document.createElement('div');
-    row.className = 'bar-row';
-    row.innerHTML = `
-      <div class="bar-top">
-        <div class="bar-left">
-          <span class="bar-cat-dot" style="background:${col}"></span>
-          <span class="bar-name">${esc(cat)}</span>
-        </div>
-        <div class="bar-right">
-          <div class="bar-amount" style="color:${col}">$${amt.toFixed(2)}</div>
-          <div class="bar-pct">${pct.toFixed(1)}% of total</div>
-        </div>
-      </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:0%;background:${col}" data-w="${pct}"></div>
-      </div>
-    `;
-    barsEl.appendChild(row);
+  const ctx = document.getElementById('chart-donut').getContext('2d');
+  if (donutChartInst) donutChartInst.destroy();
+  donutChartInst = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#0e1117',
+        hoverBorderColor: '#0e1117',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#131a24',
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#eef2ff',
+          padding: 12,
+          callbacks: {
+            label: ctx => ` $${ctx.parsed.toFixed(2)} (${(ctx.parsed / total * 100).toFixed(1)}%)`
+          }
+        }
+      },
+      animation: { duration: 600, easing: 'easeOutQuart' }
+    }
   });
+}
 
-  // Animate bars after paint
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.querySelectorAll('.bar-fill').forEach(el => {
-      el.style.width = el.dataset.w + '%';
+// ─── Recent activity table ────────────────────────────────────────────────────
+function updateRecentTable() {
+  const body = document.getElementById('recent-body');
+  const last = [...expenses].reverse().slice(0, 8);
+
+  if (!last.length) {
+    body.innerHTML = '<div class="recent-empty">No expenses yet — add some on the Expenses tab.</div>';
+    return;
+  }
+
+  const rows = last.map(e => {
+    const col  = catCol(e.category);
+    const bg   = col + '18'; const bd = col + '44';
+    const date = new Date(e.id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `<tr>
+      <td>${esc(e.name)}</td>
+      <td>
+        <span class="badge" style="background:${bg};border-color:${bd};color:${col}">
+          <span class="badge-dot" style="background:${col}"></span>${esc(e.category)}
+        </span>
+      </td>
+      <td style="color:${col}">${date}</td>
+      <td style="color:${col}">$${e.amount.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <table class="recent-table">
+      <thead><tr>
+        <th>Description</th><th>Category</th><th>Date</th><th>Amount</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// ─── Feedback form ────────────────────────────────────────────────────────────
+document.getElementById('feedback-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form    = e.target;
+  const btn     = document.getElementById('fb-submit');
+  const success = document.getElementById('fb-success');
+  const error   = document.getElementById('fb-error');
+
+  btn.textContent = 'Sending…';
+  btn.disabled    = true;
+  success.style.display = 'none';
+  error.style.display   = 'none';
+
+  try {
+    const res = await fetch(form.action, {
+      method:  'POST',
+      body:    new FormData(form),
+      headers: { 'Accept': 'application/json' }
     });
-  }));
-}
-
-// ── Donut chart ─────────────────────────────────────────────────────────────
-function animateDonut(sorted, total, duration = 750) {
-  const t0 = performance.now();
-  function frame(now) {
-    const raw = Math.min((now - t0) / duration, 1);
-    const p   = 1 - Math.pow(1 - raw, 3); // ease-out cubic
-    drawDonut(sorted, total, p);
-    if (raw < 1) requestAnimationFrame(frame);
+    if (res.ok) {
+      form.reset();
+      success.style.display = 'block';
+    } else {
+      error.style.display = 'block';
+    }
+  } catch {
+    error.style.display = 'block';
+  } finally {
+    btn.textContent = 'Send Feedback';
+    btn.disabled    = false;
   }
-  requestAnimationFrame(frame);
-}
+});
 
-function drawDonut(sorted, total, progress) {
-  const canvas = document.getElementById('donut-canvas');
-  if (!canvas) return;
-
-  const dpr  = window.devicePixelRatio || 1;
-  const size = 220;
-
-  // Set physical pixel size once
-  if (canvas.width !== size * dpr) {
-    canvas.width  = size * dpr;
-    canvas.height = size * dpr;
-  }
-
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.scale(dpr, dpr);
-
-  const cx    = size / 2;
-  const cy    = size / 2;
-  const outer = 96;
-  const inner = 58;
-  const GAP   = 0.032;
-
-  const fullAngle = 2 * Math.PI * progress;
-  let start       = -Math.PI / 2;
-  let drawn       = 0;
-
-  sorted.forEach(([cat, amt]) => {
-    const full  = (amt / total) * 2 * Math.PI;
-    const slice = Math.min(full, Math.max(0, fullAngle - drawn));
-    if (slice < 0.001) return;
-    drawn += slice;
-
-    const s = start + GAP / 2;
-    const e = start + slice - GAP / 2;
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, outer, s, e);
-    ctx.arc(cx, cy, inner, e, s, true);
-    ctx.closePath();
-    ctx.fillStyle = catCol(cat);
-    ctx.fill();
-
-    start += slice;
-  });
-
-  // Centre label (only at end of animation or near-end)
-  if (progress > 0.92) {
-    const alpha = Math.min(1, (progress - 0.92) / 0.08);
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle   = '#e2e8f5';
-    ctx.font        = `800 19px -apple-system, BlinkMacSystemFont, sans-serif`;
-    ctx.textAlign   = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('$' + total.toFixed(0), cx, cy - 9);
-    ctx.fillStyle = '#475b7a';
-    ctx.font      = `500 11px -apple-system, BlinkMacSystemFont, sans-serif`;
-    ctx.fillText('total', cx, cy + 12);
-    ctx.globalAlpha = 1;
-  }
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale for next frame
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function flash(el) {
-  el.style.borderColor = '#f43f5e';
-  el.style.boxShadow   = '0 0 0 3px rgba(244,63,94,.18)';
+  el.classList.add('flash-border');
   el.focus();
-  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 900);
+  setTimeout(() => el.classList.remove('flash-border'), 900);
 }
-
-// Restore persisted expenses on load
-expenses.forEach(exp => renderItem(exp));
-syncSummary();
-
 function esc(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+expenses.forEach(exp => renderExpItem(exp));
+syncSummaryBar();
+refreshOverview();
 </script>
 </body>
 </html>
