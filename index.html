@@ -637,6 +637,10 @@
 
     /* Tablet — 720px */
     @media (max-width: 720px) {
+      .bd-row { grid-template-columns: 1fr 160px 80px 32px; }
+      .bd-row > *:nth-child(2) { display: none; }
+      .fab-wrap { bottom: 20px; right: 20px; }
+    }
       header {
         padding: 0 20px;
         grid-template-columns: auto 1fr;
@@ -743,6 +747,20 @@
       .feedback-heading { font-size: 18px; }
 
       footer { flex-direction: column; gap: 4px; text-align: center; padding: 14px 16px; font-size: 11px; }
+
+      .bd-filters { flex-wrap: wrap; }
+      .bd-search-wrap { width: 100%; }
+      #bd-cat-filter { flex: 1; width: auto; }
+      .bd-row { grid-template-columns: 1fr auto 32px; grid-template-rows: auto auto; gap: 4px 8px; }
+      .bd-row > *:nth-child(1) { grid-column: 1; grid-row: 1; }
+      .bd-row > *:nth-child(2) { display: none; }
+      .bd-row > *:nth-child(3) { grid-column: 1; grid-row: 2; }
+      .bd-row > *:nth-child(4) { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+      .bd-row > *:nth-child(5) { grid-column: 3; grid-row: 1 / 3; align-self: center; }
+
+      .fab-wrap { bottom: 16px; right: 14px; }
+      .fab-btn  { width: 46px; height: 46px; }
+      #stat-popover { width: calc(100vw - 24px); }
     }
   </style>
 </head>
@@ -758,6 +776,7 @@
   <nav class="nav-tabs">
     <button class="tab-btn active" data-tab="overview">Overview</button>
     <button class="tab-btn"        data-tab="expenses">Expenses</button>
+    <button class="tab-btn"        data-tab="breakdown">Breakdown</button>
     <button class="tab-btn"        data-tab="edit">Edit</button>
   </nav>
 
@@ -884,6 +903,21 @@
       </div>
     </div>
 
+    <div class="list-toolbar">
+      <div class="sort-control">
+        <label for="sort-select">Sort</label>
+        <select id="sort-select">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="amount-desc">Highest amount</option>
+          <option value="amount-asc">Lowest amount</option>
+          <option value="name-asc">Name A–Z</option>
+          <option value="cat-asc">Category A–Z</option>
+        </select>
+      </div>
+      <span class="exp-count-label" id="exp-count-label"></span>
+    </div>
+
     <div class="list-head">
       <span>Description</span><span>Amount</span><span>Category</span><span></span>
     </div>
@@ -979,7 +1013,78 @@
 
   </div><!-- /edit -->
 
+  <!-- ─── Breakdown ────────────────────────────────────────────────────────── -->
+  <div class="page" id="page-breakdown">
+
+    <div class="card bd-filter-card">
+      <div class="bd-filters">
+        <div class="bd-search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="bd-search" type="text" placeholder="Search description, category or notes…" autocomplete="off">
+        </div>
+        <select id="bd-cat-filter">
+          <option value="">All categories</option>
+          <option>Food &amp; Dining</option>
+          <option>Transportation</option>
+          <option>Housing &amp; Rent</option>
+          <option>Utilities &amp; Bills</option>
+          <option>Health &amp; Wellness</option>
+          <option>Entertainment</option>
+          <option>Shopping</option>
+          <option>Travel</option>
+          <option>Education</option>
+          <option>Subscriptions</option>
+          <option>Gifts &amp; Donations</option>
+          <option>Other</option>
+        </select>
+        <button class="btn-ghost btn-sm" id="bd-clear">Clear</button>
+      </div>
+    </div>
+
+    <div class="bd-summary" id="bd-summary"></div>
+    <div id="breakdown-content">
+      <div class="breakdown-empty">No expenses yet — add some on the Expenses tab.</div>
+    </div>
+
+  </div><!-- /breakdown -->
+
 </div><!-- /app-body -->
+
+<!-- ─── Stat popover ──────────────────────────────────────────────────────────── -->
+<div id="stat-popover"></div>
+
+<!-- ─── FAB ───────────────────────────────────────────────────────────────────── -->
+<div class="fab-wrap">
+  <div class="fab-menu" id="fab-menu">
+    <button class="fab-item" id="fab-feedback">
+      <span class="fab-icon" style="background:rgba(167,139,250,.18);color:var(--accent-2)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      Send Feedback
+    </button>
+    <button class="fab-item" id="fab-breakdown">
+      <span class="fab-icon" style="background:rgba(34,211,238,.18);color:var(--cyan)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </span>
+      Breakdown
+    </button>
+    <button class="fab-item" id="fab-edit">
+      <span class="fab-icon" style="background:rgba(251,146,60,.18);color:var(--orange)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </span>
+      Edit Expense
+    </button>
+    <button class="fab-item" id="fab-add">
+      <span class="fab-icon" style="background:rgba(91,127,255,.18);color:var(--accent)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
+      Add Expense
+    </button>
+  </div>
+  <button class="fab-btn" id="fab-btn" aria-label="Quick actions">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+</div>
 
 <!-- ─── Feedback ──────────────────────────────────────────────────────────────── -->
 <section class="feedback-section">
@@ -1040,10 +1145,23 @@ Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Inter", sans-s
 const STORAGE_KEY = 'expendr_expenses';
 const expenses    = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let   editingId   = null;
+let   sortKey     = 'date-desc';
 let   timeChartInst  = null;
 let   donutChartInst = null;
 
 function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses)); }
+
+function getSortedExpenses() {
+  const a = [...expenses];
+  switch (sortKey) {
+    case 'date-asc':    return a.sort((x,y) => expDateISO(x).localeCompare(expDateISO(y)));
+    case 'amount-desc': return a.sort((x,y) => y.amount - x.amount);
+    case 'amount-asc':  return a.sort((x,y) => x.amount - y.amount);
+    case 'name-asc':    return a.sort((x,y) => x.name.localeCompare(y.name));
+    case 'cat-asc':     return a.sort((x,y) => x.category.localeCompare(y.category));
+    default:            return a.sort((x,y) => expDateISO(y).localeCompare(expDateISO(x)));
+  }
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function flash(el) {
@@ -1070,7 +1188,9 @@ function switchTab(name) {
     b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.page').forEach(p =>
     p.classList.toggle('active', p.id === 'page-' + name));
-  if (name === 'overview') refreshOverview();
+  if (name === 'overview')   refreshOverview();
+  if (name === 'breakdown')  renderBreakdown();
+  hidePop();
 }
 document.querySelectorAll('.tab-btn').forEach(btn =>
   btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
@@ -1109,7 +1229,7 @@ function addExpense() {
   };
   expenses.push(exp);
   persist();
-  renderExpItem(exp, true);
+  renderAllExpenses();
   syncAll();
   inpName.value = ''; inpAmount.value = ''; inpNotes.value = '';
   inpDate.value = todayISO(); inpName.focus();
@@ -1164,10 +1284,13 @@ function renderExpItem(exp, prepend = false) {
 }
 
 function renderAllExpenses() {
+  const sorted = getSortedExpenses();
   [...listEl.children].forEach(c => { if (c.id !== 'list-empty') c.remove(); });
-  if (expenses.length) {
+  const lbl = document.getElementById('exp-count-label');
+  if (lbl) lbl.textContent = sorted.length === 1 ? '1 expense' : `${sorted.length} expenses`;
+  if (sorted.length) {
     listEmpty.style.display = 'none';
-    expenses.forEach(exp => renderExpItem(exp));
+    sorted.forEach(exp => renderExpItem(exp));
   } else {
     listEmpty.style.display = '';
   }
@@ -1250,7 +1373,8 @@ document.getElementById('edit-delete-btn').addEventListener('click', () => {
 // ─── Sync ─────────────────────────────────────────────────────────────────────
 function syncAll() {
   syncSummaryBar();
-  if (document.getElementById('page-overview').classList.contains('active')) refreshOverview();
+  if (document.getElementById('page-overview').classList.contains('active'))   refreshOverview();
+  if (document.getElementById('page-breakdown').classList.contains('active'))  renderBreakdown();
 }
 function syncSummaryBar() {
   const total = expenses.reduce((s, e) => s + e.amount, 0);
@@ -1439,10 +1563,266 @@ document.getElementById('feedback-form').addEventListener('submit', async e => {
   finally { btn.textContent = 'Send Feedback'; btn.disabled = false; }
 });
 
+// ─── Sort select ──────────────────────────────────────────────────────────────
+document.getElementById('sort-select').addEventListener('change', e => {
+  sortKey = e.target.value;
+  renderAllExpenses();
+});
+
+// ─── Breakdown ────────────────────────────────────────────────────────────────
+function renderBreakdown() {
+  const content = document.getElementById('breakdown-content');
+  const search  = (document.getElementById('bd-search').value || '').trim().toLowerCase();
+  const catFlt  = document.getElementById('bd-cat-filter').value;
+
+  if (!expenses.length) {
+    content.innerHTML = '<div class="breakdown-empty">No expenses yet — add some on the Expenses tab.</div>';
+    updateBdSummary(0, 0, 0); return;
+  }
+
+  let filtered = expenses.filter(e => {
+    const matchS = !search || e.name.toLowerCase().includes(search) ||
+      (e.notes || '').toLowerCase().includes(search) ||
+      e.category.toLowerCase().includes(search);
+    return matchS && (!catFlt || e.category === catFlt);
+  });
+
+  if (!filtered.length) {
+    content.innerHTML = '<div class="breakdown-empty">No expenses match your filters.</div>';
+    updateBdSummary(0, 0, 0); return;
+  }
+
+  filtered = [...filtered].sort((a, b) => expDateISO(b).localeCompare(expDateISO(a)));
+
+  const groups = {};
+  filtered.forEach(e => {
+    const key = expDateISO(e).slice(0, 7);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(e);
+  });
+
+  const keys  = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+  const total = filtered.reduce((s, e) => s + e.amount, 0);
+  updateBdSummary(keys.length, filtered.length, total);
+
+  content.innerHTML = keys.map(key => {
+    const [y, m] = key.split('-');
+    const monthLabel = new Date(+y, +m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const exps       = groups[key];
+    const mTotal     = exps.reduce((s, e) => s + e.amount, 0);
+
+    const rows = exps.map(e => {
+      const col = catCol(e.category), bg = col + '18', bd = col + '44';
+      return `<div class="bd-row" data-id="${e.id}">
+        <div><div class="bd-name">${esc(e.name)}</div>${e.notes ? `<div style="font-size:11px;color:var(--text-3)">${esc(e.notes)}</div>` : ''}</div>
+        <span class="bd-date-cell">${fmtDate(expDateISO(e))}</span>
+        <span><span class="badge" style="background:${bg};border-color:${bd};color:${col}"><span class="badge-dot" style="background:${col}"></span>${esc(e.category)}</span></span>
+        <span class="bd-amt" style="color:${col}">$${e.amount.toFixed(2)}</span>
+        <button class="bd-edit-btn" data-id="${e.id}" title="Edit">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>`;
+    }).join('');
+
+    return `<div class="month-group">
+      <div class="month-header">
+        <span class="month-name">${monthLabel}</span>
+        <div class="month-stats">
+          <span>${exps.length} expense${exps.length !== 1 ? 's' : ''}</span>
+          <span class="month-total">$${mTotal.toFixed(2)}</span>
+        </div>
+      </div>
+      <div class="month-rows">${rows}</div>
+    </div>`;
+  }).join('');
+
+  content.querySelectorAll('.bd-edit-btn').forEach(btn =>
+    btn.addEventListener('click', e => { e.stopPropagation(); openEdit(+btn.dataset.id); }));
+  content.querySelectorAll('.bd-row').forEach(row =>
+    row.addEventListener('click', () => openEdit(+row.dataset.id)));
+}
+
+function updateBdSummary(months, count, total) {
+  const el = document.getElementById('bd-summary');
+  if (!el) return;
+  el.innerHTML = count
+    ? `<strong>${count}</strong> expense${count !== 1 ? 's' : ''} across <strong>${months}</strong> month${months !== 1 ? 's' : ''} — total <strong>$${total.toFixed(2)}</strong>`
+    : '';
+}
+
+document.getElementById('bd-search').addEventListener('input', renderBreakdown);
+document.getElementById('bd-cat-filter').addEventListener('change', renderBreakdown);
+document.getElementById('bd-clear').addEventListener('click', () => {
+  document.getElementById('bd-search').value = '';
+  document.getElementById('bd-cat-filter').value = '';
+  renderBreakdown();
+});
+
+// ─── Stat popovers ────────────────────────────────────────────────────────────
+let popTimer  = null;
+let popPinned = false;
+
+function initStatPopovers() {
+  const pop   = document.getElementById('stat-popover');
+  const cards = document.querySelectorAll('.stat-card');
+
+  cards.forEach((card, idx) => {
+    card.addEventListener('mouseenter', () => {
+      if (popPinned) return;
+      clearTimeout(popTimer);
+      showPop(card, idx);
+    });
+    card.addEventListener('mouseleave', () => {
+      if (popPinned) return;
+      popTimer = setTimeout(hidePop, 180);
+    });
+    card.addEventListener('click', e => {
+      e.stopPropagation();
+      if (popPinned && pop._pinnedIdx === idx) { popPinned = false; hidePop(); return; }
+      popPinned = true;
+      pop._pinnedIdx = idx;
+      showPop(card, idx);
+    });
+  });
+
+  pop.addEventListener('mouseenter', () => { if (!popPinned) clearTimeout(popTimer); });
+  pop.addEventListener('mouseleave', () => { if (!popPinned) popTimer = setTimeout(hidePop, 180); });
+  document.addEventListener('click', e => {
+    if (popPinned && !e.target.closest('.stat-card') && !e.target.closest('#stat-popover')) {
+      popPinned = false; hidePop();
+    }
+  });
+}
+
+function showPop(cardEl, idx) {
+  const pop = document.getElementById('stat-popover');
+  pop.innerHTML = getPopHTML(idx);
+  pop.style.display = 'block';
+  pop.style.top = '-999px';
+  requestAnimationFrame(() => {
+    const rect = cardEl.getBoundingClientRect();
+    const popH = pop.offsetHeight;
+    const popW = 260;
+    let top  = rect.bottom + 8;
+    if (top + popH > window.innerHeight - 12) top = rect.top - popH - 8;
+    let left = rect.left;
+    if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+    if (left < 12) left = 12;
+    pop.style.top  = top  + 'px';
+    pop.style.left = left + 'px';
+    pop.classList.add('visible');
+  });
+}
+
+function hidePop() {
+  const pop = document.getElementById('stat-popover');
+  pop.classList.remove('visible');
+  setTimeout(() => { if (!pop.classList.contains('visible')) pop.style.display = 'none'; }, 160);
+}
+
+function getPopHTML(idx) {
+  const total = expenses.reduce((s, e) => s + e.amount, 0);
+  const n     = expenses.length;
+  const none  = '<div style="color:var(--text-3);font-size:12.5px;padding:4px 0">No expenses yet</div>';
+
+  if (idx === 0) {
+    if (!n) return `<div class="pop-title">Top Categories</div>${none}`;
+    const bycat = {};
+    expenses.forEach(e => { bycat[e.category] = (bycat[e.category] || 0) + e.amount; });
+    const top = Object.entries(bycat).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    return `<div class="pop-title">Top Categories</div>` + top.map(([cat, amt]) => {
+      const col = catCol(cat), pct = amt / total * 100;
+      return `<div class="pop-row">
+        <span class="pop-lbl"><span class="pop-dot" style="background:${col}"></span>${esc(cat)}</span>
+        <span class="pop-val">$${amt.toFixed(2)}</span>
+      </div>
+      <div class="pop-bar-wrap"><div class="pop-bar" style="width:${pct}%;background:${col}"></div></div>`;
+    }).join('') + `<div class="pop-hint">Click to pin</div>`;
+  }
+
+  if (idx === 1) {
+    const now = new Date();
+    const month = expenses.filter(e => {
+      const d = new Date(expDateISO(e) + 'T00:00:00');
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).sort((a, b) => expDateISO(b).localeCompare(expDateISO(a))).slice(0, 6);
+    const label = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    if (!month.length) return `<div class="pop-title">${label}</div><div style="color:var(--text-3);font-size:12.5px;padding:4px 0">No expenses this month</div>`;
+    return `<div class="pop-title">${label}</div>` + month.map(e => {
+      const col = catCol(e.category);
+      return `<div class="pop-row">
+        <span class="pop-lbl">${esc(e.name)}</span>
+        <span class="pop-val" style="color:${col}">$${e.amount.toFixed(2)}</span>
+      </div>`;
+    }).join('') + `<div class="pop-hint">Click to pin</div>`;
+  }
+
+  if (idx === 2) {
+    if (!n) return `<div class="pop-title">Distribution</div>${none}`;
+    const sorted = expenses.map(e => e.amount).sort((a, b) => a - b);
+    const min    = sorted[0], max = sorted[n - 1], avg = total / n;
+    const median = n % 2 === 0 ? (sorted[n/2-1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+    const minE   = expenses.find(e => e.amount === min);
+    const maxE   = expenses.find(e => e.amount === max);
+    return `<div class="pop-title">Distribution</div>
+      <div class="pop-row"><span class="pop-lbl">Minimum</span><span class="pop-val" style="color:var(--green)">$${min.toFixed(2)}</span></div>
+      ${minE ? `<div style="font-size:11px;color:var(--text-3);padding-bottom:4px">${esc(minE.name)}</div>` : ''}
+      <div class="pop-row"><span class="pop-lbl">Median</span><span class="pop-val" style="color:var(--accent-2)">$${median.toFixed(2)}</span></div>
+      <div class="pop-row"><span class="pop-lbl">Average</span><span class="pop-val" style="color:var(--accent)">$${avg.toFixed(2)}</span></div>
+      <div class="pop-row"><span class="pop-lbl">Maximum</span><span class="pop-val" style="color:var(--orange)">$${max.toFixed(2)}</span></div>
+      ${maxE ? `<div style="font-size:11px;color:var(--text-3);padding-top:2px">${esc(maxE.name)}</div>` : ''}
+      <div class="pop-hint">Click to pin</div>`;
+  }
+
+  if (idx === 3) {
+    if (!n) return `<div class="pop-title">Top 5 Expenses</div>${none}`;
+    const top5 = [...expenses].sort((a, b) => b.amount - a.amount).slice(0, 5);
+    return `<div class="pop-title">Top 5 Expenses</div>` + top5.map((e, i) => {
+      const col = catCol(e.category);
+      return `<div class="pop-row">
+        <span class="pop-lbl"><span style="color:var(--text-3);font-size:11px;margin-right:4px">${i+1}.</span>${esc(e.name)}</span>
+        <span class="pop-val" style="color:${col}">$${e.amount.toFixed(2)}</span>
+      </div>`;
+    }).join('') + `<div class="pop-hint">Click to pin</div>`;
+  }
+  return '';
+}
+
+// ─── FAB ──────────────────────────────────────────────────────────────────────
+function initFab() {
+  const btn  = document.getElementById('fab-btn');
+  const menu = document.getElementById('fab-menu');
+  const close = () => { menu.classList.remove('open'); btn.classList.remove('open'); };
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.fab-wrap')) close(); });
+
+  document.getElementById('fab-add').addEventListener('click', () => {
+    close(); switchTab('expenses');
+    setTimeout(() => document.getElementById('inp-name').focus(), 120);
+  });
+  document.getElementById('fab-edit').addEventListener('click', () => {
+    close(); switchTab('edit');
+  });
+  document.getElementById('fab-breakdown').addEventListener('click', () => {
+    close(); switchTab('breakdown');
+  });
+  document.getElementById('fab-feedback').addEventListener('click', () => {
+    close();
+    document.querySelector('.feedback-section').scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-expenses.forEach(exp => renderExpItem(exp));
+renderAllExpenses();
 syncSummaryBar();
 refreshOverview();
+initStatPopovers();
+initFab();
 </script>
 </body>
 </html>
